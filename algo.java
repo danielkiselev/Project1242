@@ -13,8 +13,10 @@ public class algo {
 	char board[][] = new char[3][3];//holds game board
 	HashMap<Integer,Integer> hm = new HashMap<>();//location, current occupancy used to build game board 
 	Integer selectMove = null;//move we want to play
+	int mod = 0;
 	
 	public algo (player hum, player comp, mat m){
+		//System.out.println(hum.);
 		this.m = m;
 		this.hum = hum;
 		this.comp = comp;
@@ -32,58 +34,35 @@ public class algo {
 		return res;
 	}
 	
-	public Integer deterVal(algoTree nodes[],Integer depth) {
+	public Integer deterVal(algoTree nodes[],int depth) {
 		Integer val= null;
-		Integer bestChild = null;
+		int tval = 0;
 		for(int i = 0; i<nodes.length; i++) {
 			if(depth == 0 ) {
-				//System.out.println("New move = "+ nodes[i].move +" | New val =  " + nodes[i].val +"  | Depth"+depth + "  |term" + nodes[i].term);
+				System.out.println("New move = "+ nodes[i].move +" | New val =  " + nodes[i].val +"  | Depth"+depth + "  |term" + nodes[i].term);
 			}
-			if(nodes[i].term) {
+			if(depth%2 == 0) {//grabs max val
 				if(val == null) {
 					val = 0;
+					val = nodes[i].val;
 				}
-				val += nodes[i].val;
-			}
-			else{
-				if(nodes[i].val != null) {
-					if(depth%2 == 0) {
-						if(bestChild==null) {
-							bestChild = nodes[i].val;
-						}
-						else if(nodes[i].val>bestChild) {
-							bestChild = nodes[i].val;
-						}
-					}
-					if(depth%2 == 1) {
-						if(bestChild==null) {
-							bestChild = nodes[i].val;
-						}
-						else if(nodes[i].val<bestChild) {
-							bestChild = nodes[i].val;
-						}
-					}
+				else if(nodes[i].val> val) {
+					val = nodes[i].val;
 				}
+			}
+			
+			else if(depth%2 == 1) {//grabs min val
+				if(val == null) {
+					val = 0;
+					val = nodes[i].val;
+				}
+				else if(nodes[i].val< val) {
+					val = nodes[i].val;
+				}
+			}
+		}
 
-			}
-		}
-		if(val != null) {
-			if(val>0 && (depth%2 == 0 )) {
-				return val;
-			}
-			if(val<0 && (depth%2 == 1 )) {
-				return val;
-			}
-			return val;
-		}
-		
-		if(bestChild != null) {
-			return bestChild;
-		}
-		
-
-		//System.out.println("No value assigned");
-		return null;
+		return val;
 	}
 	
 	
@@ -92,7 +71,7 @@ public class algo {
 		Integer ovr = null;
 		int move= 0;
 		int move1 = 0;
-		Integer bestChild = null;
+		Integer bestChild = -1000;
 		for(int i = 0; i<nodes.length; i++) {
 			//System.out.println("moving to"+nodes[i].move+"   value = " + nodes[i].val);
 			if(nodes[i].term) {
@@ -109,18 +88,12 @@ public class algo {
 				}
 				System.out.println("term = " + ovr);
 			}
-				if(bestChild==null) {
-					bestChild = 0;
+			else if(nodes[i].val!= null && nodes[i].val>bestChild) {
+				System.out.print("moving to"+nodes[i].move+"   value = " + nodes[i].val);
 					bestChild = nodes[i].val;
 					move1 = nodes[i].move;
 					//System.out.println("fun Deter move" + move);
-					
-				}
-				else if(nodes[i].val!= null && nodes[i].val>bestChild) {
-					bestChild = nodes[i].val;
-					move1 = nodes[i].move;
-					//System.out.println("fun Deter move" + move);
-				}
+			}
 
 		}
 		if(ovr != null) {
@@ -129,7 +102,7 @@ public class algo {
 		}
 		else {
 			selectMove = move1;
-			//System.out.println("Deter move returned" + move);
+			System.out.println("Deter move returned" + move1);
 			return move1;
 		}
 
@@ -138,12 +111,10 @@ public class algo {
 	//(parent node, available spots, human spots, computer spots, depth of search)
 	public algoTree actions(algoTree root,Integer [] aT, Integer[] eT, Integer [] mT, int depth) {
 		algoTree rootCopy = root;
-		Integer res = null;
 		int szA = aT.length;
 		int newMsz = mT.length+1;
 		int newEsz = eT.length+1;
 		int newAsz = szA-1;
-		d = depth;
 		algoTree nodes [] = new algoTree[szA];//creates a node for every available spot
 		for(Integer i = 0; i<szA; i++) {
 			if(depth%2 == 0) {//computer simulated move
@@ -152,26 +123,14 @@ public class algo {
 				newA = newAval(aT,aT[i]);//fills array
 				newM = newUsed(mT,aT[i]);//fills array
 				nodes [i] = new algoTree(depth, newA, eT, newM, aT[i]);//Integer depth, Integer[] a, Integer[] enemy, Integer[] mine, Integer move
-				Integer value = null;
-				value = checkTerm(nodes[i]);//checks if played move is terminal
+				Integer value = checkTerm(nodes[i]);//checks if played move is terminal
 
 				if (value != null) {//if terminal, assigns terminal identifier 
-					if(depth == 0) {
-						System.out.println(nodes[i].move+"spot"+" is term, value = "+value);
+						nodes[i].val = value;
+						nodes[i].term = true;
 					}
-					nodes[i].setVal(value);//assigns value of node
-					nodes[i].setTerm(true);
-				}
 				else {//if not terminal we take the played node and repeat
-					nodes[i].setVal((actions(nodes[i],newA, eT, newM, depth+1)).getVal());
-					if(depth == 0) {
-						/*
-						System.out.println("move"+ nodes[i].move);
-						System.out.println("new A= "+ nodes[i].a.length);
-						System.out.println("new U of term = "+nodes[i].mine.length);
-						System.out.println("value of term = "+value);
-						*/
-					}
+					nodes[i].setVal(actions(nodes[i],newA, eT, newM, depth+1).val);
 				}
 			}
 			else if(depth%2 == 1) {//human
@@ -180,23 +139,49 @@ public class algo {
 				newA = newAval(aT,aT[i]);
 				newE = newUsed(eT,aT[i]);
 				nodes [i] = new algoTree(depth, newA, newE, mT, aT[i]);
-				Integer value = null;
-				value = checkTerm(nodes[i]);//checks if played move is terminal
-				if (value != null) {
-					nodes[i].setVal(value);
-					nodes[i].setTerm(true);
+				Integer value = checkTerm(nodes[i]);//checks if played move is terminal
+				if (value != null) {//if terminal, assigns terminal identifier 
+					nodes[i].val = value;
+					nodes[i].term = true;
 				}
 				else{
-					nodes[i].setVal((actions(nodes[i],newA, newE, mT, depth+1)).getVal());
+					nodes[i].setVal(actions(nodes[i],newA, newE, mT, depth+1).val);
 				}
 			}
 			rootCopy.addChild(nodes[i]);
 		}
-		res = deterVal(nodes, depth);//checks the nodes for all the avaliable spots. 
+		
+		rootCopy.val = deterVal(nodes, depth);
+		//System.out.println("rootcopy.val: "+ rootCopy.val);
+		if(depth != 0) {
+			return rootCopy;
+		}
+		else {
+			System.out.println("setting move");
+			Integer val= null;
+			int move = 0;
+			for(int i = 0; i<nodes.length; i++) {
+					if(val == null) {
+						val = nodes[i].val;
+						move = nodes[i].move;
+					}
+					else if(nodes[i].val> val) {
+						val = nodes[i].val;
+						move = nodes[i].move;
+					}
+				}
+			rootCopy.setMove(move);
+			System.out.println("ROOT.move to:"+ rootCopy.move);
+			return rootCopy;
+		}
+			
+		
+
+		//checks the nodes for all the avaliable spots. 
 		//uses depth value to determine if min or max.
 		//returns the value of the root node
-		
-		rootCopy.setVal(res);//assigns value to root node object
+
+		/*
 		if(depth == 0) {//root depth
 			System.out.println("setting move");
 			rootCopy.setMove(deterMove(nodes));//when recursed back to top, we pass all possible nodes in to determine best move
@@ -211,7 +196,42 @@ public class algo {
 			return rootCopy;
 			//assign integer of best move
 		}
-		return rootCopy;//return root with newly assigned move.
+		
+		if(res != null) {
+			rootCopy.val= res;//assigns value to root node object
+			return rootCopy;
+		}
+		else {
+			if(depth%2 == 0) {
+				Integer temp = null;
+				for(Integer i = 0; i<szA; i++) {
+					if(temp == null) {
+						temp = 0;
+						temp = nodes[i].val;
+					}
+					else if(nodes[i].val>temp) {
+						temp = nodes[i].val;
+					}
+				}
+				rootCopy.val = temp;
+			}
+			if(depth%2 == 1) {
+				Integer temp = null;
+				for(Integer i = 0; i<szA; i++) {
+					if(temp == null) {
+						temp = 0;
+						temp = nodes[i].val;
+					}
+					else if(nodes[i].val<temp) {
+						temp = nodes[i].val;
+					}
+				}
+				rootCopy.val = temp;
+			}
+			
+		}
+		*/
+
 	}
 	
 	public Integer checkTerm(algoTree node) {//returns value if terminal
@@ -221,26 +241,26 @@ public class algo {
 		Integer enemy [] = node.enemy;
 		Integer mine [] = node.mine;
 		Integer move = node.move;
-		listE.add(move);
-		listM.add(move);
+		
 		for(int i = 0; i<enemy.length; i++) {
 			listE.add(enemy[i]);
 		}
 		for(int i = 0; i<mine.length; i++) {
 			listM.add(mine[i]);
 		}
+		
 		if(win(listE)) {
 			//System.out.println("found -1");
-			res = -1;
+			return -1;
 		}
 		else if(win(listM)) {
 			//System.out.println("found +1");
-			res = 1;
+			return 1;
 		}
 		else if(enemy.length + mine.length == 9){
-			res =0;
+			return 0;
 		}
-		return res;
+		return null;
 	}
 	
 	public boolean win(List<Integer> check) {//checks if win or loss
@@ -331,7 +351,7 @@ public class algo {
 		return newU;
 	}
 	
-	public void start() {//converts hm into Strings
+	private void start() {//converts hm into Strings
 		//stores all tiles # in string into each respective catagory
 		StringBuilder avaliable = new StringBuilder(); 
 		StringBuilder enemy = new StringBuilder(); 
@@ -354,7 +374,9 @@ public class algo {
 		Integer [] avaA = parser(avaliable.toString());
 		Integer [] eneA = parser(enemy.toString());
 		Integer [] mineA = parser(mine.toString());
-		
+		System.out.println("ava: "+avaliable.toString());
+		System.out.println("ene: "+enemy.toString());
+		System.out.println("mine: "+mine.toString());
 		//parses strings into integer arrays and passes data into algo 
 		algoTree root = new algoTree(0, avaA , eneA, mineA , 0);//Integer depth, Integer[] a, Integer[] enemy, Integer[] mine, Integer move
 		int moveT = (actions(root,avaA,eneA,mineA ,0)).move;//
